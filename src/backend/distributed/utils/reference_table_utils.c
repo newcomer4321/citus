@@ -117,7 +117,7 @@ EnsureReferenceTablesExistOnAllNodes(void)
 	ShardInterval *shardInterval = (ShardInterval *) linitial(shardIntervalList);
 	uint64 shardId = shardInterval->shardId;
 
-	/* prevent this funcion from running concurrently with itself */
+	/* prevent this function from running concurrently with itself */
 	int colocationId = TableColocationId(referenceTableId);
 	LockColocationId(colocationId, ExclusiveLock);
 
