@@ -415,6 +415,24 @@ ReferenceTablePlacementNodeList(LOCKMODE lockMode)
 
 
 /*
+ * CoordinatorTablePlacementNodeList returns a single element list containing
+ * the cooridinator node.
+ */
+List *
+CoordinatorTablePlacementNodeList(LOCKMODE lockMode)
+{
+	EnsureModificationsCanRun();
+
+	WorkerNode *coordinatorNode = LookupNodeForGroup(COORDINATOR_GROUP_ID);
+
+	WorkerNode *workerNodeCopy = palloc0(sizeof(WorkerNode));
+	*workerNodeCopy = *coordinatorNode;
+
+	return list_make1(workerNodeCopy);
+}
+
+
+/*
  * DistributedTablePlacementNodeList returns a list of all active, primary
  * worker nodes that can store new data, i.e shouldstoreshards is 'true'
  */

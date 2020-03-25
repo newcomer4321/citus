@@ -4,3 +4,4 @@
 
 #include "udfs/citus_extradata_container/9.3-1.sql"
 #include "udfs/update_distributed_table_colocation/9.3-1.sql"
+#include "udfs/create_coordinator_table/9.3-1.sql"

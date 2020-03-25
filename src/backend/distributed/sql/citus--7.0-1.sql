@@ -26,7 +26,7 @@ $$;
 
 DROP FUNCTION citus_setup_ssl();
 
--- Citus data types
+-- Citus table distribution types
 
 CREATE TYPE citus.distribution_type AS ENUM (
    'hash',

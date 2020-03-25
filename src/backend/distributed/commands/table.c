@@ -875,7 +875,7 @@ ErrorIfUnsupportedConstraint(Relation relation, char distributionMethod,
 	 * given that they only consist of a single shard and we can simply rely on
 	 * Postgres.
 	 */
-	if (distributionMethod == DISTRIBUTE_BY_NONE)
+	if (IsSingleShardDistribution(distributionMethod))
 	{
 		return;
 	}
@@ -1220,7 +1220,7 @@ SetupExecutionModeForAlterTable(Oid relationId, AlterTableCmd *command)
 				Oid rightRelationId = RangeVarGetRelid(constraint->pktable, NoLock,
 													   false);
 				if (IsCitusTable(rightRelationId) &&
-					PartitionMethod(rightRelationId) == DISTRIBUTE_BY_NONE)
+					IsSingleShardDistribution(PartitionMethod(rightRelationId)))
 				{
 					executeSequentially = true;
 				}
@@ -1256,7 +1256,7 @@ SetupExecutionModeForAlterTable(Oid relationId, AlterTableCmd *command)
 			Oid rightRelationId = RangeVarGetRelid(constraint->pktable, NoLock,
 												   false);
 			if (IsCitusTable(rightRelationId) &&
-				PartitionMethod(rightRelationId) == DISTRIBUTE_BY_NONE)
+				IsSingleShardDistribution(PartitionMethod(rightRelationId)))
 			{
 				executeSequentially = true;
 			}
@@ -1278,7 +1278,7 @@ SetupExecutionModeForAlterTable(Oid relationId, AlterTableCmd *command)
 	 * sequential mode.
 	 */
 	if (executeSequentially && IsCitusTable(relationId) &&
-		PartitionMethod(relationId) != DISTRIBUTE_BY_NONE &&
+		!IsSingleShardDistribution(PartitionMethod(relationId)) &&
 		ParallelQueryExecutedInTransaction())
 	{
 		char *relationName = get_rel_name(relationId);
@@ -1337,7 +1337,7 @@ InterShardDDLTaskList(Oid leftRelationId, Oid rightRelationId,
 	 * since we only have one placement per worker. This hack is first implemented
 	 * for foreign constraint support from distributed tables to reference tables.
 	 */
-	if (rightPartitionMethod == DISTRIBUTE_BY_NONE)
+	if (IsSingleShardDistribution(rightPartitionMethod))
 	{
 		int rightShardCount = list_length(rightShardList);
 		int leftShardCount = list_length(leftShardList);

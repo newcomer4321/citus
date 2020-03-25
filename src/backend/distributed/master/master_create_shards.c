@@ -328,7 +328,7 @@ CreateColocatedShards(Oid targetRelationId, Oid sourceRelationId, bool
  * Also, the shard is replicated to the all active nodes in the cluster.
  */
 void
-CreateReferenceTableShard(Oid distributedTableId)
+CreateReferenceTableShard(Oid distributedTableId, char distributionMethod)
 {
 	int workerStartIndex = 0;
 	text *shardMinValue = NULL;
@@ -360,14 +360,27 @@ CreateReferenceTableShard(Oid distributedTableId)
 							   tableName)));
 	}
 
-	/*
-	 * load and sort the worker node list for deterministic placements
-	 * create_reference_table has already acquired pg_dist_node lock
-	 */
-	List *nodeList = ReferenceTablePlacementNodeList(ShareLock);
-	nodeList = SortList(nodeList, CompareWorkerNodes);
+	List *nodeList = NIL;
 
-	int replicationFactor = ReferenceTableReplicationFactor();
+	int replicationFactor = 0;
+
+	if (distributionMethod == DISTRIBUTE_BY_NONE)
+	{
+		/*
+		 * load and sort the worker node list for deterministic placements
+		 * create_reference_table has already acquired pg_dist_node lock
+		 */
+		nodeList = ReferenceTablePlacementNodeList(ShareLock);
+		nodeList = SortList(nodeList, CompareWorkerNodes);
+
+		replicationFactor = ReferenceTableReplicationFactor();
+	}
+	else
+	{
+		nodeList = CoordinatorTablePlacementNodeList(ShareLock);
+
+		replicationFactor = 1;
+	}
 
 	/* get the next shard id */
 	uint64 shardId = GetNextShardId();
