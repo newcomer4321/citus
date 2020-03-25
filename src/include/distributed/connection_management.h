@@ -55,7 +55,15 @@ enum MultiConnectionMode
 	OUTSIDE_TRANSACTION = 1 << 4,
 
 	/* connection has not been used to access data */
-	REQUIRE_SIDECHANNEL = 1 << 5
+	REQUIRE_SIDECHANNEL = 1 << 5,
+
+	/*
+	 * Some connections are optionally required such as when adaptive executor is
+	 * executing a multi-shard command and requires the second (or further) connections
+	 * per node. In that case, the connection manager may decide not to allow the
+	 * connection.
+	 */
+	OPTIONAL_CONNECTION = 1 << 6
 };
 
 /*
