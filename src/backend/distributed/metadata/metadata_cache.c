@@ -794,7 +794,7 @@ GetCitusTableCacheEntry(Oid distributedRelationId)
 
 		if (relationName == NULL)
 		{
-			ereport(ERROR, (errmsg("relation with OID %u does not exist",
+			ereport(ERROR, (errmsg("[metadata_cache] relation with OID %u does not exist",
 								   distributedRelationId)));
 		}
 		else

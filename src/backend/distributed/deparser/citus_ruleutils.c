@@ -885,7 +885,7 @@ pg_get_table_grants(Oid relationId)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist",
+				 errmsg("[pg_get_table_grants] relation with OID %u does not exist",
 						relationId)));
 	}
 
