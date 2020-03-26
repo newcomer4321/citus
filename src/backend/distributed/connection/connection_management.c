@@ -81,7 +81,7 @@ static WaitEventSet * WaitEventSetFromMultiConnectionStates(List *connections,
 															int *waitCount);
 static void CloseNotReadyMultiConnectionStates(List *connectionStates);
 static uint32 MultiConnectionStateEventMask(MultiConnectionPollState *connectionState);
-
+static void CitusPQFinish(MultiConnection *connection);
 
 static int CitusNoticeLogLevel = DEFAULT_CITUS_NOTICE_LEVEL;
 
@@ -525,8 +525,7 @@ CloseConnection(MultiConnection *connection)
 	bool found;
 
 	/* close connection */
-	PQfinish(connection->pgConn);
-	connection->pgConn = NULL;
+	CitusPQFinish(connection);
 
 	strlcpy(key.hostname, connection->hostname, MAX_NODE_LENGTH);
 	key.port = connection->port;
@@ -606,8 +605,7 @@ ShutdownConnection(MultiConnection *connection)
 	{
 		SendCancelationRequest(connection);
 	}
-	PQfinish(connection->pgConn);
-	connection->pgConn = NULL;
+	CitusPQFinish(connection);
 }
 
 
@@ -972,9 +970,24 @@ CloseNotReadyMultiConnectionStates(List *connectionStates)
 		}
 
 		/* close connection, otherwise we take up resource on the other side */
-		PQfinish(connection->pgConn);
-		connection->pgConn = NULL;
+		CitusPQFinish(connection);
 	}
+}
+
+
+/*
+ * CitusPQFinish is a wrapper around
+ */
+static void
+CitusPQFinish(MultiConnection *connection)
+{
+	if (connection->pgConn != NULL)
+	{
+		DecrementSharedConnectionCounter(connection->hostname, connection->port);
+	}
+
+	PQfinish(connection->pgConn);
+	connection->pgConn = NULL;
 }
 
 
