@@ -200,7 +200,7 @@ ExecuteLocalTaskList(CitusScanState *scanState, List *taskList)
 				taskParameterTypes = NULL;
 			}
 
-			Query *shardQuery = ParseQueryString(TaskQueryString(task),
+			Query *shardQuery = ParseQueryString(TaskQueryStringAllPlacements(task),
 												 taskParameterTypes,
 												 taskNumParams);
 
@@ -301,7 +301,7 @@ ExecuteLocalUtilityTaskList(List *localTaskList)
 
 	foreach_ptr(localTask, localTaskList)
 	{
-		const char *localTaskQueryCommand = TaskQueryString(localTask);
+		const char *localTaskQueryCommand = TaskQueryStringAllPlacements(localTask);
 
 		/* we do not expect tasks with INVALID_SHARD_ID for utility commands */
 		Assert(localTask->anchorShardId != INVALID_SHARD_ID);
@@ -389,7 +389,7 @@ LogLocalCommand(Task *task)
 	}
 
 	ereport(NOTICE, (errmsg("executing the command locally: %s",
-							ApplyLogRedaction(TaskQueryString(task)))));
+							ApplyLogRedaction(TaskQueryStringAllPlacements(task)))));
 }
 
 
