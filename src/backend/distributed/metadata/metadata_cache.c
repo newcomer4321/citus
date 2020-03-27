@@ -763,11 +763,13 @@ LookupShardCacheEntry(int64 shardId)
 
 		if (!foundInCache)
 		{
+			Assert(false);
 			ereport(ERROR, (errmsg("could not find valid entry for shard "
 								   UINT64_FORMAT, shardId)));
 		}
 	}
 
+	Assert(false);
 	return shardEntry;
 }
 

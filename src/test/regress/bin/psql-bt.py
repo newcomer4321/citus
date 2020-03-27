@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import subprocess, sys, os
 
 args = " ".join(map(lambda s: '"%s"' % s if ' ' in s else s, sys.argv[1:]))
 
-psql = subprocess.Popen([args + " 2>&1"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=os.environ, shell=True)
+psql = subprocess.Popen([args], stderr=subprocess.STDOUT, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=os.environ, shell=True)
 
 psql.stdin.write("SELECT pg_backend_pid();\n")
 psql.stdout.readline() # SELECT pg_backend_pid();
