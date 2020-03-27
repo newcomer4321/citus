@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import subprocess, sys, os
 
@@ -6,7 +6,7 @@ args = " ".join(map(lambda s: '"%s"' % s if ' ' in s else s, sys.argv[1:]))
 
 psql = subprocess.Popen([args], stderr=subprocess.STDOUT, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=os.environ, shell=True)
 
-psql.stdin.write("SELECT pg_backend_pid();\n")
+psql.stdin.write(b"SELECT pg_backend_pid();\n")
 psql.stdout.readline() # SELECT pg_backend_pid();
 psql.stdout.readline() # pg_backend_pid
 psql.stdout.readline() # -----------------------
@@ -25,12 +25,12 @@ psql.stdin.close()
 while psql.returncode is None:
     psql.poll()
 
-sys.stdout.write(''.join(psql.stdout.readlines()))
+sys.stdout.write(bytes(''.join(psql.stdout.readlines()), 'utf-8'))
 
 ret = psql.returncode
 
 if ret:
-    sys.stdout.write(''.join(gdb.stdout.readlines()))
-    sys.stdout.write(''.join(gdb.stderr.readlines()))
+    sys.stdout.write(bytes(''.join(gdb.stdout.readlines()), 'utf-8'))
+    sys.stdout.write(bytes(''.join(gdb.stderr.readlines()), 'utf-8'))
 
 exit(ret)
