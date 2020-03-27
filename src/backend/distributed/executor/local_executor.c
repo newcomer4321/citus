@@ -200,7 +200,7 @@ ExecuteLocalTaskList(CitusScanState *scanState, List *taskList)
 				taskParameterTypes = NULL;
 			}
 
-			Query *shardQuery = ParseQueryString(TaskQueryStringAllPlacements(task),
+			Query *shardQuery = ParseQueryString(TaskQueryStringForAllPlacements(task),
 												 taskParameterTypes,
 												 taskNumParams);
 
@@ -219,9 +219,15 @@ ExecuteLocalTaskList(CitusScanState *scanState, List *taskList)
 
 		LogLocalCommand(task);
 
-		char *shardQueryString = task->queryStringLazy
-								 ? task->queryStringLazy
-								 : "<optimized out by local execution>";
+		char *shardQueryString = NULL;
+		if (GetTaskQueryType(task) == TASK_QUERY_TEXT)
+		{
+			shardQueryString = TaskQueryStringForAllPlacements(task);
+		}
+		else
+		{
+			shardQueryString = "<optimized out by local execution>";
+		}
 
 		totalRowsProcessed +=
 			ExecuteLocalTaskPlan(scanState, localPlan, shardQueryString);
@@ -301,7 +307,7 @@ ExecuteLocalUtilityTaskList(List *localTaskList)
 
 	foreach_ptr(localTask, localTaskList)
 	{
-		const char *localTaskQueryCommand = TaskQueryStringAllPlacements(localTask);
+		const char *localTaskQueryCommand = TaskQueryStringForAllPlacements(localTask);
 
 		/* we do not expect tasks with INVALID_SHARD_ID for utility commands */
 		Assert(localTask->anchorShardId != INVALID_SHARD_ID);
@@ -389,7 +395,7 @@ LogLocalCommand(Task *task)
 	}
 
 	ereport(NOTICE, (errmsg("executing the command locally: %s",
-							ApplyLogRedaction(TaskQueryStringAllPlacements(task)))));
+							ApplyLogRedaction(TaskQueryStringForAllPlacements(task)))));
 }
 
 
