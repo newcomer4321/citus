@@ -2360,7 +2360,7 @@ ManageWorkerPool(WorkerPool *workerPool)
 		if (!connection)
 		{
 			/* connection can only be NULL for optional connections */
-			Assert((connectionFlags & connectionFlags));
+			Assert((connectionFlags & OPTIONAL_CONNECTION));
 			continue;
 		}
 
