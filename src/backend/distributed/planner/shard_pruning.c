@@ -324,12 +324,14 @@ PruneShards(Oid relationId, Index rangeTableId, List *whereClauseList,
 	/* there are no shards to return */
 	if (shardCount == 0)
 	{
+		ReleaseCacheEntry(cacheEntry);
 		return NIL;
 	}
 
 	/* always return empty result if WHERE clause is of the form: false (AND ..) */
 	if (ContainsFalseClause(whereClauseList))
 	{
+		ReleaseCacheEntry(cacheEntry);
 		return NIL;
 	}
 
@@ -338,7 +340,10 @@ PruneShards(Oid relationId, Index rangeTableId, List *whereClauseList,
 	{
 		prunedList = ShardArrayToList(cacheEntry->sortedShardIntervalArray,
 									  cacheEntry->shardIntervalArrayLength);
-		return DeepCopyShardIntervalList(prunedList);
+		prunedList = DeepCopyShardIntervalList(prunedList);
+
+		ReleaseCacheEntry(cacheEntry);
+		return prunedList;
 	}
 
 
@@ -515,7 +520,9 @@ PruneShards(Oid relationId, Index rangeTableId, List *whereClauseList,
 	 * Deep copy list, so it's independent of the CitusTableCacheEntry
 	 * contents.
 	 */
-	return DeepCopyShardIntervalList(prunedList);
+	prunedList = DeepCopyShardIntervalList(prunedList);
+	ReleaseCacheEntry(cacheEntry);
+	return prunedList;
 }
 
 

@@ -695,6 +695,7 @@ CheckConflictingRelationAccesses(Oid relationId, ShardPlacementAccessType access
 	if (!(cacheEntry->partitionMethod == DISTRIBUTE_BY_NONE &&
 		  cacheEntry->referencingRelationsViaForeignKey != NIL))
 	{
+		ReleaseCacheEntry(cacheEntry);
 		return;
 	}
 
@@ -790,6 +791,8 @@ CheckConflictingRelationAccesses(Oid relationId, ShardPlacementAccessType access
 			SetLocalMultiShardModifyModeToSequential();
 		}
 	}
+
+	ReleaseCacheEntry(cacheEntry);
 }
 
 
@@ -815,8 +818,10 @@ CheckConflictingParallelRelationAccesses(Oid relationId, ShardPlacementAccessTyp
 	if (!(cacheEntry->partitionMethod == DISTRIBUTE_BY_HASH &&
 		  cacheEntry->referencedRelationsViaForeignKey != NIL))
 	{
+		ReleaseCacheEntry(cacheEntry);
 		return;
 	}
+	ReleaseCacheEntry(cacheEntry);
 
 	if (MultiShardConnectionType == PARALLEL_CONNECTION &&
 		HoldsConflictingLockWithReferencedRelations(relationId, accessType,
@@ -904,6 +909,7 @@ HoldsConflictingLockWithReferencedRelations(Oid relationId, ShardPlacementAccess
 			*conflictingRelationId = referencedRelation;
 			*conflictingAccessMode = PLACEMENT_ACCESS_SELECT;
 
+			ReleaseCacheEntry(cacheEntry);
 			return true;
 		}
 
@@ -917,6 +923,7 @@ HoldsConflictingLockWithReferencedRelations(Oid relationId, ShardPlacementAccess
 			*conflictingRelationId = referencedRelation;
 			*conflictingAccessMode = PLACEMENT_ACCESS_DML;
 
+			ReleaseCacheEntry(cacheEntry);
 			return true;
 		}
 
@@ -926,10 +933,12 @@ HoldsConflictingLockWithReferencedRelations(Oid relationId, ShardPlacementAccess
 			*conflictingRelationId = referencedRelation;
 			*conflictingAccessMode = PLACEMENT_ACCESS_DDL;
 
+			ReleaseCacheEntry(cacheEntry);
 			return true;
 		}
 	}
 
+	ReleaseCacheEntry(cacheEntry);
 	return false;
 }
 
@@ -1034,9 +1043,11 @@ HoldsConflictingLockWithReferencingRelations(Oid relationId, ShardPlacementAcces
 		{
 			*conflictingRelationId = referencingRelation;
 
+			ReleaseCacheEntry(cacheEntry);
 			return true;
 		}
 	}
 
+	ReleaseCacheEntry(cacheEntry);
 	return false;
 }

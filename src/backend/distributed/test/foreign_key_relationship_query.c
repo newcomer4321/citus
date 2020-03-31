@@ -40,6 +40,7 @@ get_referencing_relation_id_list(PG_FUNCTION_ARGS)
 		Oid relationId = PG_GETARG_OID(0);
 		CitusTableCacheEntry *cacheEntry = GetCitusTableCacheEntry(relationId);
 		List *refList = cacheEntry->referencingRelationsViaForeignKey;
+		ReleaseCacheEntry(cacheEntry);
 
 		/* create a function context for cross-call persistence */
 		functionContext = SRF_FIRSTCALL_INIT();
@@ -91,6 +92,7 @@ get_referenced_relation_id_list(PG_FUNCTION_ARGS)
 		Oid relationId = PG_GETARG_OID(0);
 		CitusTableCacheEntry *cacheEntry = GetCitusTableCacheEntry(relationId);
 		List *refList = cacheEntry->referencedRelationsViaForeignKey;
+		ReleaseCacheEntry(cacheEntry);
 
 		/* create a function context for cross-call persistence */
 		functionContext = SRF_FIRSTCALL_INIT();

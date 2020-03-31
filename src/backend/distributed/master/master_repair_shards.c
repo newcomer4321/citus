@@ -206,6 +206,8 @@ ErrorIfTableCannotBeReplicated(Oid relationId)
 	}
 
 	CitusTableCacheEntry *tableEntry = GetCitusTableCacheEntry(relationId);
+	char replicationModel = tableEntry->replicationModel;
+	ReleaseCacheEntry(tableEntry);
 	char *relationName = get_rel_name(relationId);
 
 	/*
@@ -215,7 +217,7 @@ ErrorIfTableCannotBeReplicated(Oid relationId)
 	 * master_copy_shard_placement() can be used to create placements in
 	 * such nodes.
 	 */
-	if (tableEntry->replicationModel == REPLICATION_MODEL_STREAMING)
+	if (replicationModel == REPLICATION_MODEL_STREAMING)
 	{
 		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						(errmsg("Table %s is streaming replicated. Shards "

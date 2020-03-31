@@ -2220,6 +2220,8 @@ CitusCopyDestReceiverStartup(DestReceiver *dest, int operation,
 	copyDest->shardStateHash = CreateShardStateHash(TopTransactionContext);
 	copyDest->connectionStateHash = CreateConnectionStateHash(TopTransactionContext);
 
+	ReleaseCacheEntry(cacheEntry);
+
 	RecordRelationAccessIfReferenceTable(tableId, PLACEMENT_ACCESS_DML);
 }
 
@@ -2480,6 +2482,7 @@ ShardIdForTuple(CitusCopyDestReceiver *copyDest, Datum *columnValues, bool *colu
 	CitusTableCacheEntry *cacheEntry =
 		GetCitusTableCacheEntry(copyDest->distributedRelationId);
 	ShardInterval *shardInterval = FindShardInterval(partitionColumnValue, cacheEntry);
+	ReleaseCacheEntry(cacheEntry);
 	if (shardInterval == NULL)
 	{
 		ereport(ERROR, (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

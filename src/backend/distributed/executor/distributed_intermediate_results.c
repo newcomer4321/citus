@@ -60,7 +60,7 @@ static void WrapTasksForPartitioning(const char *resultIdPrefix, List *selectTas
 									 CitusTableCacheEntry *targetRelation,
 									 bool binaryFormat);
 static List * ExecutePartitionTaskList(List *partitionTaskList,
-									   CitusTableCacheEntry *targetRelation);
+									   CitusTableCacheEntry **targetRelation);
 static ArrayType * CreateArrayFromDatums(Datum *datumArray, bool *nullsArray, int
 										 datumCount, Oid typeId);
 static void ShardMinMaxValueArrays(ShardInterval **shardIntervalArray, int shardCount,
@@ -99,7 +99,7 @@ static void ExecuteFetchTaskList(List *fetchTaskList);
 List **
 RedistributeTaskListResults(const char *resultIdPrefix, List *selectTaskList,
 							int partitionColumnIndex,
-							CitusTableCacheEntry *targetRelation,
+							CitusTableCacheEntry **targetRelation,
 							bool binaryFormat)
 {
 	/*
@@ -113,7 +113,7 @@ RedistributeTaskListResults(const char *resultIdPrefix, List *selectTaskList,
 	List *fragmentList = PartitionTasklistResults(resultIdPrefix, selectTaskList,
 												  partitionColumnIndex,
 												  targetRelation, binaryFormat);
-	return ColocateFragmentsWithRelation(fragmentList, targetRelation);
+	return ColocateFragmentsWithRelation(fragmentList, *targetRelation);
 }
 
 
@@ -134,11 +134,11 @@ RedistributeTaskListResults(const char *resultIdPrefix, List *selectTaskList,
 List *
 PartitionTasklistResults(const char *resultIdPrefix, List *selectTaskList,
 						 int partitionColumnIndex,
-						 CitusTableCacheEntry *targetRelation,
+						 CitusTableCacheEntry **targetRelation,
 						 bool binaryFormat)
 {
-	if (targetRelation->partitionMethod != DISTRIBUTE_BY_HASH &&
-		targetRelation->partitionMethod != DISTRIBUTE_BY_RANGE)
+	if ((*targetRelation)->partitionMethod != DISTRIBUTE_BY_HASH &&
+		(*targetRelation)->partitionMethod != DISTRIBUTE_BY_RANGE)
 	{
 		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("repartitioning results of a tasklist is only supported "
@@ -154,7 +154,7 @@ PartitionTasklistResults(const char *resultIdPrefix, List *selectTaskList,
 	UseCoordinatedTransaction();
 
 	WrapTasksForPartitioning(resultIdPrefix, selectTaskList,
-							 partitionColumnIndex, targetRelation,
+							 partitionColumnIndex, *targetRelation,
 							 binaryFormat);
 	return ExecutePartitionTaskList(selectTaskList, targetRelation);
 }
@@ -318,7 +318,7 @@ CreateArrayFromDatums(Datum *datumArray, bool *nullsArray, int datumCount, Oid t
  * and returns its results as a list of DistributedResultFragment.
  */
 static List *
-ExecutePartitionTaskList(List *taskList, CitusTableCacheEntry *targetRelation)
+ExecutePartitionTaskList(List *taskList, CitusTableCacheEntry **targetRelation)
 {
 	TupleDesc resultDescriptor = NULL;
 	Tuplestorestate *resultStore = NULL;
@@ -339,9 +339,13 @@ ExecutePartitionTaskList(List *taskList, CitusTableCacheEntry *targetRelation)
 	TupleDescInitEntry(resultDescriptor, (AttrNumber) 4, "rows_written",
 					   INT8OID, -1, 0);
 
+	Oid targetRelationId = (*targetRelation)->relationId;
+	ReleaseCacheEntry(*targetRelation);
+
 	bool errorOnAnyFailure = false;
 	resultStore = ExecuteSelectTasksIntoTupleStore(taskList, resultDescriptor,
 												   errorOnAnyFailure);
+	*targetRelation = GetCitusTableCacheEntry(targetRelationId);
 
 	List *fragmentList = NIL;
 	TupleTableSlot *slot = MakeSingleTupleTableSlotCompat(resultDescriptor,
@@ -349,7 +353,7 @@ ExecutePartitionTaskList(List *taskList, CitusTableCacheEntry *targetRelation)
 	while (tuplestore_gettupleslot(resultStore, true, false, slot))
 	{
 		DistributedResultFragment *distributedResultFragment =
-			TupleToDistributedResultFragment(slot, targetRelation);
+			TupleToDistributedResultFragment(slot, *targetRelation);
 
 		fragmentList = lappend(fragmentList, distributedResultFragment);
 

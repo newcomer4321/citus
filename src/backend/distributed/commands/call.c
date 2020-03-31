@@ -56,6 +56,7 @@ CallDistributedProcedureRemotely(CallStmt *callStmt, DestReceiver *dest)
 																 functionId, 0);
 	if (procedure == NULL || !procedure->isDistributed)
 	{
+		ReleaseCacheEntry(procedure);
 		return false;
 	}
 
@@ -65,6 +66,7 @@ CallDistributedProcedureRemotely(CallStmt *callStmt, DestReceiver *dest)
 
 /*
  * CallFuncExprRemotely calls a procedure of function on the worker if possible.
+ * Releases supplied DistObjectCacheEntry.
  */
 static bool
 CallFuncExprRemotely(CallStmt *callStmt, DistObjectCacheEntry *procedure,
@@ -151,6 +153,8 @@ CallFuncExprRemotely(CallStmt *callStmt, DistObjectCacheEntry *procedure,
 		ereport(DEBUG1, (errmsg("there is no worker node with metadata")));
 		return false;
 	}
+
+	ReleaseCacheEntry(procedure);
 
 	ereport(DEBUG1, (errmsg("pushing down the procedure")));
 

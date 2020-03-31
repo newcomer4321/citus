@@ -1833,8 +1833,6 @@ void
 multi_relation_restriction_hook(PlannerInfo *root, RelOptInfo *relOptInfo,
 								Index restrictionIndex, RangeTblEntry *rte)
 {
-	CitusTableCacheEntry *cacheEntry = NULL;
-
 	if (ReplaceCitusExtraDataContainer && IsCitusExtraDataContainerRelation(rte))
 	{
 		/*
@@ -1897,10 +1895,12 @@ multi_relation_restriction_hook(PlannerInfo *root, RelOptInfo *relOptInfo,
 	 */
 	if (distributedTable)
 	{
-		cacheEntry = GetCitusTableCacheEntry(rte->relid);
+		CitusTableCacheEntry *cacheEntry = GetCitusTableCacheEntry(rte->relid);
 
 		relationRestrictionContext->allReferenceTables &=
 			(cacheEntry->partitionMethod == DISTRIBUTE_BY_NONE);
+
+		ReleaseCacheEntry(cacheEntry);
 	}
 
 	relationRestrictionContext->relationRestrictionList =
@@ -2434,8 +2434,10 @@ IsLocalReferenceTableJoin(Query *parse, List *rangeTableList)
 		}
 		else
 		{
+			ReleaseCacheEntry(cacheEntry);
 			return false;
 		}
+		ReleaseCacheEntry(cacheEntry);
 	}
 
 	return hasLocalTable && hasReferenceTable;
@@ -2500,11 +2502,14 @@ UpdateReferenceTablesWithShard(Node *node, void *context)
 	CitusTableCacheEntry *cacheEntry = GetCitusTableCacheEntry(relationId);
 	if (cacheEntry->partitionMethod != DISTRIBUTE_BY_NONE)
 	{
+		ReleaseCacheEntry(cacheEntry);
 		return false;
 	}
 
 	ShardInterval *shardInterval = cacheEntry->sortedShardIntervalArray[0];
 	uint64 shardId = shardInterval->shardId;
+
+	ReleaseCacheEntry(cacheEntry);
 
 	char *relationName = get_rel_name(relationId);
 	AppendShardIdToName(&relationName, shardId);

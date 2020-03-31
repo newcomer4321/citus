@@ -75,7 +75,9 @@ partition_task_list_results(PG_FUNCTION_ARGS)
 
 	List *fragmentList = PartitionTasklistResults(resultIdPrefix, taskList,
 												  partitionColumnIndex,
-												  targetRelation, binaryFormat);
+												  &targetRelation, binaryFormat);
+
+	ReleaseCacheEntry(targetRelation);
 
 	TupleDesc tupleDescriptor = NULL;
 	Tuplestorestate *tupleStore = SetupTuplestore(fcinfo, &tupleDescriptor);
@@ -143,7 +145,7 @@ redistribute_task_list_results(PG_FUNCTION_ARGS)
 
 	List **shardResultIds = RedistributeTaskListResults(resultIdPrefix, taskList,
 														partitionColumnIndex,
-														targetRelation, binaryFormat);
+														&targetRelation, binaryFormat);
 
 	TupleDesc tupleDescriptor = NULL;
 	Tuplestorestate *tupleStore = SetupTuplestore(fcinfo, &tupleDescriptor);
@@ -179,6 +181,8 @@ redistribute_task_list_results(PG_FUNCTION_ARGS)
 	}
 
 	tuplestore_donestoring(tupleStore);
+
+	ReleaseCacheEntry(targetRelation);
 
 	PG_RETURN_DATUM(0);
 }

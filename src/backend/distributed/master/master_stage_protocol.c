@@ -625,6 +625,7 @@ RelationShardListForShardCreate(ShardInterval *shardInterval)
 		relationShardList = lappend(relationShardList, fkeyRelationShard);
 	}
 
+	ReleaseCacheEntry(cacheEntry);
 
 	/* if partitioned table, make sure to record the parent table */
 	if (PartitionTable(relationId))

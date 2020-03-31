@@ -254,6 +254,8 @@ SortedShardIntervalArray(Oid distributedTableId)
 		shardIdDatumArray[shardIndex] = shardIdDatum;
 	}
 
+	ReleaseCacheEntry(cacheEntry);
+
 	ArrayType *shardIdArrayType = DatumArrayToArrayType(shardIdDatumArray, shardIdCount,
 														shardIdTypeId);
 

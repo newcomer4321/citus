@@ -231,6 +231,8 @@ ShouldSyncTableMetadata(Oid relationId)
 	bool mxTable = (streamingReplicated && hashDistributed);
 	bool referenceTable = (tableEntry->partitionMethod == DISTRIBUTE_BY_NONE);
 
+	ReleaseCacheEntry(tableEntry);
+
 	if (mxTable || referenceTable)
 	{
 		return true;
@@ -466,8 +468,6 @@ MetadataCreateCommands(void)
 List *
 GetDistributedTableDDLEvents(Oid relationId)
 {
-	CitusTableCacheEntry *cacheEntry = GetCitusTableCacheEntry(relationId);
-
 	List *commandList = NIL;
 	bool includeSequenceDefaults = true;
 
@@ -484,8 +484,10 @@ GetDistributedTableDDLEvents(Oid relationId)
 	commandList = lappend(commandList, tableOwnerResetCommand);
 
 	/* command to insert pg_dist_partition entry */
+	CitusTableCacheEntry *cacheEntry = GetCitusTableCacheEntry(relationId);
 	char *metadataCommand = DistributionCreateCommand(cacheEntry);
 	commandList = lappend(commandList, metadataCommand);
+	ReleaseCacheEntry(cacheEntry);
 
 	/* commands to create the truncate trigger of the table */
 	char *truncateTriggerCreateCommand = TruncateTriggerCreateCommand(relationId);

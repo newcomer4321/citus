@@ -198,6 +198,8 @@ LockTruncatedRelationMetadataInWorkers(TruncateStmt *truncateStatement)
 			distributedRelationList = list_append_unique_oid(distributedRelationList,
 															 referencingRelationId);
 		}
+
+		ReleaseCacheEntry(cacheEntry);
 	}
 
 	if (distributedRelationList != NIL)

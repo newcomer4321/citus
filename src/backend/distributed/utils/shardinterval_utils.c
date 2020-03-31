@@ -259,11 +259,13 @@ ShardIndex(ShardInterval *shardInterval)
 		/* reference tables has only a single shard, so the index is fixed to 0 */
 		shardIndex = 0;
 
+		ReleaseCacheEntry(cacheEntry);
 		return shardIndex;
 	}
 
 	shardIndex = FindShardIntervalIndex(shardMinValue, cacheEntry);
 
+	ReleaseCacheEntry(cacheEntry);
 	return shardIndex;
 }
 

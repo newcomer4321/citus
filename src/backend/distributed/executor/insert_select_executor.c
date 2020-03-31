@@ -254,7 +254,7 @@ CoordinatorInsertSelectExecScanInternal(CustomScanState *node)
 			List **redistributedResults = RedistributeTaskListResults(distResultPrefix,
 																	  distSelectTaskList,
 																	  partitionColumnIndex,
-																	  targetRelation,
+																	  &targetRelation,
 																	  binaryFormat);
 
 			/*
@@ -267,6 +267,7 @@ CoordinatorInsertSelectExecScanInternal(CustomScanState *node)
 															   targetRelation,
 															   redistributedResults,
 															   binaryFormat);
+			ReleaseCacheEntry(targetRelation);
 
 			scanState->tuplestorestate =
 				tuplestore_begin_heap(randomAccess, interTransactions, work_mem);
@@ -536,6 +537,7 @@ TwoPhaseInsertSelectTaskList(Oid targetRelationId, Query *insertSelectQuery,
 		taskIdIndex++;
 	}
 
+	ReleaseCacheEntry(targetCacheEntry);
 	return taskList;
 }
 
@@ -884,10 +886,12 @@ bool
 IsSupportedRedistributionTarget(Oid targetRelationId)
 {
 	CitusTableCacheEntry *tableEntry = GetCitusTableCacheEntry(targetRelationId);
+	char partitionMethod = tableEntry->partitionMethod;
+	ReleaseCacheEntry(tableEntry);
 
 	/* only range and hash-distributed tables are currently supported */
-	if (tableEntry->partitionMethod != DISTRIBUTE_BY_HASH &&
-		tableEntry->partitionMethod != DISTRIBUTE_BY_RANGE)
+	if (partitionMethod != DISTRIBUTE_BY_HASH &&
+		partitionMethod != DISTRIBUTE_BY_RANGE)
 	{
 		return false;
 	}
